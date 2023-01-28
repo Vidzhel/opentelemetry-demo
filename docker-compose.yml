@@ -625,26 +625,61 @@ services:
     logging: *logging
 
   # OpenTelemetry Collector
+#  otelcol:
+#    image: otel/opentelemetry-collector-contrib:0.69.0
+#    container_name: otel-col
+#    deploy:
+#      resources:
+#        limits:
+#          memory: 100M
+#    restart: unless-stopped
+#    command: [ "--config=/etc/otelcol-config.yml", "--config=/etc/otelcol-config-extras.yml" ]
+#    volumes:
+#      - ./src/otelcollector/otelcol-config.yml:/etc/otelcol-config.yml
+#      - ./src/otelcollector/otelcol-config-extras.yml:/etc/otelcol-config-extras.yml
+#    ports:
+#      - "4317"          # OTLP over gRPC receiver
+#      - "4318:4318"     # OTLP over HTTP receiver
+#      - "9464"          # Prometheus exporter
+#      - "8888"          # metrics endpoint
+#    depends_on:
+#      - jaeger
+#    logging: *logging
+
   otelcol:
-    image: otel/opentelemetry-collector-contrib:0.69.0
-    container_name: otel-col
+    image: signoz/signoz-otel-collector:latest
+    container_name: otel-col-custom
     deploy:
       resources:
         limits:
           memory: 100M
     restart: unless-stopped
-    command: [ "--config=/etc/otelcol-config.yml", "--config=/etc/otelcol-config-extras.yml" ]
+    command: [ "--config=/etc/otelcol-config.yml" ]
     volumes:
-      - ./src/otelcollector/otelcol-config.yml:/etc/otelcol-config.yml
-      - ./src/otelcollector/otelcol-config-extras.yml:/etc/otelcol-config-extras.yml
+      - ./src/otelcollector/otelcol-custom-config.yml:/etc/otelcol-config.yml
     ports:
       - "4317"          # OTLP over gRPC receiver
-      - "4318:4318"     # OTLP over HTTP receiver
+      - "4318"     # OTLP over HTTP receiver
       - "9464"          # Prometheus exporter
       - "8888"          # metrics endpoint
     depends_on:
       - jaeger
+      - neo4j
     logging: *logging
+
+  neo4j:
+    image: neo4j:5.3
+    container_name: signoz-neo4j
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    restart: unless-stopped
+    volumes:
+      - ./data/neo4j/conf:/conf
+      - ./data/neo4j/data:/data
+      - ./data/neo4j/import:/import
+      - ./data/neo4j/logs:/logs
+      - ./data/neo4j/plugins:/plugins
 
   # Prometheus
   prometheus:
