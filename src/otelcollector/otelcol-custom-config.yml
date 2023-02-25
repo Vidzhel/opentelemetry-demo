@@ -22,7 +22,7 @@ receivers:
 
 exporters:
   neo4jtraces:
-    datasource: bolt://neo4j:7687/?username=neo4j&password=password
+    datasource: bolt://neo4j:7687/?username=neo4j&password=password&db=otel
   logging:
 #    verbosity: detailed
     sampling_initial: 1
