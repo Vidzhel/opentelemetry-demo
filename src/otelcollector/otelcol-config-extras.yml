@@ -1,2 +1,81 @@
 # extra settings to be merged into OpenTelemetry Collector configuration
 # do not delete this file
+
+exporters:
+  datadog:
+    api:
+      site: ${DD_SITE}
+      key: "${DD_API_KEY}"   # Set/Replace with your Datadog API key
+    host_metadata:
+      tags:
+        - otel:true
+  logging:
+    logLevel: debug
+  otlp/ls:
+    endpoint: ingest.lightstep.com:443
+    headers:
+      "lightstep-access-token": "${LIGHTSTEP_TOKEN}"
+  otlphttp/appd:
+    traces_endpoint: <from step 4c above>/v1beta/trace
+    metrics_endpoint: <from step 4c above>/v1beta/metrics
+    auth:
+      authenticator: oauth2client/appd
+  otlphttp/dynatrace:
+    endpoint: "${DT_OTLP_ENDPOINT}"
+    headers:
+      Authorization: "Api-Token ${DT_API_TOKEN}"
+  otlp/aspecto:
+    endpoint: otelcol.aspecto.io:4317
+    headers:
+      Authorization: "${ASPECTO_TOKEN}"
+  otlp/newrelic:
+    endpoint: ${NEWRELIC_OTLP_ENDPOINT}
+    headers:
+      api-key: ${NEWRELIC_LICENSE_KEY}
+  otlp/honeycomb:
+    endpoint: "api.honeycomb.io:443"
+    headers:
+      "x-honeycomb-team": "${HONEYCOMB_API_KEY}"
+      "x-honeycomb-dataset": "webstore-metrics"
+
+processors:
+  resource:
+    attributes:
+      - key: deployment.environment   # Set env tag for Datadog
+        value: "otel"
+        action: upsert
+      - key: service.namespace
+        action: upsert
+        value: otel-demo
+  attributes:
+    include:
+      match_type: strict
+      services:
+        - frontend-proxy
+    actions:
+      - key: "net.component"
+        value: "proxy"
+        action: insert
+  spanmetrics/dynatrace:
+    metrics_exporter: otlphttp/dynatrace
+    aggregation_temporality: AGGREGATION_TEMPORALITY_DELTA
+
+
+extensions:
+  # AppD cloud requires enabling oath2client extension for sending data to it
+  oauth2client/appd:
+    client_id: <from step 4a above>
+    client_secret: <from step 4b above >
+    token_url: <from step 4d above>
+
+service:
+  extensions: [oauth2client/appd]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [spanmetrics, spanmetrics/dynatrace, batch, resource, attributes]
+      exporters: [otlp, datadog, otlp/ls, otlphttp/dynatrace, otlp/aspecto, otlp/newrelic, otlp/honeycomb]
+    metrics:
+      receivers: [otlp]
+      processors: [batch, resource]
+      exporters: [prometheus, datadog, otlp/ls, otlphttp/dynatrace, otlp/newrelic, otlp/honeycomb]

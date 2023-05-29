@@ -524,7 +524,7 @@ services:
   # Postgres used by Feature Flag service
   ffs_postgres:
     image: postgres:14
-    container_name: postgres
+    container_name: ffs_postgres
     user: postgres
     deploy:
       resources:
@@ -625,49 +625,57 @@ services:
     logging: *logging
 
   # OpenTelemetry Collector
-#  otelcol:
-#    image: otel/opentelemetry-collector-contrib:0.69.0
-#    container_name: otel-col
-#    deploy:
-#      resources:
-#        limits:
-#          memory: 100M
-#    restart: unless-stopped
-#    command: [ "--config=/etc/otelcol-config.yml", "--config=/etc/otelcol-config-extras.yml" ]
-#    volumes:
-#      - ./src/otelcollector/otelcol-config.yml:/etc/otelcol-config.yml
-#      - ./src/otelcollector/otelcol-config-extras.yml:/etc/otelcol-config-extras.yml
-#    ports:
-#      - "4317"          # OTLP over gRPC receiver
-#      - "4318:4318"     # OTLP over HTTP receiver
-#      - "9464"          # Prometheus exporter
-#      - "8888"          # metrics endpoint
-#    depends_on:
-#      - jaeger
-#    logging: *logging
-
   otelcol:
-    image: signoz/signoz-otel-collector:latest
-    container_name: otel-col-custom
+    image: otel/opentelemetry-collector-contrib:0.69.0
+    container_name: otel-col
     deploy:
       resources:
         limits:
           memory: 100M
     restart: unless-stopped
-    command: [ "--config=/etc/otelcol-config.yml" ]
+    command: [ "--config=/etc/otelcol-config.yml", "--config=/etc/otelcol-config-extras.yml" ]
     volumes:
-      - ./src/otelcollector/otelcol-custom-config.yml:/etc/otelcol-config.yml
+      - ./src/otelcollector/otelcol-config.yml:/etc/otelcol-config.yml
+      - ./src/otelcollector/otelcol-config-extras.yml:/etc/otelcol-config-extras.yml
     ports:
       - "4317"          # OTLP over gRPC receiver
-      - "4318"     # OTLP over HTTP receiver
+      - "4318:4318"     # OTLP over HTTP receiver
       - "9464"          # Prometheus exporter
       - "8888"          # metrics endpoint
     depends_on:
-      jaeger:
-        condition: service_started
-      neo4j:
-        condition: service_healthy
-    logging: *logging
+      - jaeger
+    environment:
+      - NEWRELIC_OTLP_ENDPOINT=${NEWRELIC_OTLP_ENDPOINT}
+      - NEWRELIC_LICENSE_KEY=${NEWRELIC_LICENSE_KEY}
+      - DT_OTLP_ENDPOINT=${DT_OTLP_ENDPOINT}
+      - DT_API_TOKEN=${DT_API_TOKEN}
+      - LIGHTSTEP_TOKEN=${LIGHTSTEP_TOKEN}
+      - ASPECTO_TOKEN=${ASPECTO_TOKEN}
+      - HONEYCOMB_API_KEY=${HONEYCOMB_API_KEY}
+      - DD_API_KEY=${DD_API_KEY}
+
+#  otelcol:
+#    image: signoz/signoz-otel-collector:latest
+#    container_name: otel-col-custom
+#    deploy:
+#      resources:
+#        limits:
+#          memory: 100M
+#    restart: unless-stopped
+#    command: [ "--config=/etc/otelcol-config.yml" ]
+#    volumes:
+#      - ./src/otelcollector/otelcol-custom-config.yml:/etc/otelcol-config.yml
+#    ports:
+#      - "4317"          # OTLP over gRPC receiver
+#      - "4318"     # OTLP over HTTP receiver
+#      - "9464"          # Prometheus exporter
+#      - "8888"          # metrics endpoint
+#    depends_on:
+#      jaeger:
+#        condition: service_started
+#      neo4j:
+#        condition: service_healthy
+#    logging: *logging
 
   neo4j:
     image: neo4j:5.4-enterprise
