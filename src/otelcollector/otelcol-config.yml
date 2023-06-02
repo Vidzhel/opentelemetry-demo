@@ -9,31 +9,34 @@ receivers:
             - "https://*"
 
 exporters:
-  otlp:
-    endpoint: "jaeger:4317"
-    tls:
-      insecure: true
+  file:
+    path: /export/metrics.json
   logging:
     verbosity: detailed
     sampling_initial: 11
     sampling_thereafter: 2000
-  prometheus:
-    endpoint: "otelcol:9464"
-    resource_to_telemetry_conversion:
-      enabled: true
-    enable_open_metrics: true
+
 processors:
   batch:
+
+connectors:
   spanmetrics:
-    metrics_exporter: prometheus
+    histogram:
+      explicit:
+        buckets: [ 100us, 1ms, 2ms, 6ms, 10ms, 100ms, 250ms ]
+    dimensions:
+      - name: http.status_code
+    dimensions_cache_size: 1000
+    aggregation_temporality: "AGGREGATION_TEMPORALITY_DELTA"
+    metrics_flush_interval: 15s
 
 service:
   pipelines:
+    metrics:
+      receivers: [spanmetrics]
+      processors: [batch]
+      exporters: [file]
     traces:
       receivers: [otlp]
-      processors: [spanmetrics, batch]
-      exporters: [logging, otlp]
-    metrics:
-      receivers: [otlp]
       processors: [batch]
-      exporters: [prometheus, logging]
+      exporters: [spanmetrics]

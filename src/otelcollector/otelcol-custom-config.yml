@@ -21,11 +21,11 @@ receivers:
       #   endpoint: 0.0.0.0:6832
 
 exporters:
-  neo4jtraces:
-    datasource: bolt://neo4j:7687/?username=neo4j&password=password&db=otel
   logging:
 #    verbosity: detailed
     sampling_initial: 1
+  file:
+    path: /export/metrics.json
 processors:
   batch:
     send_batch_size: 10000
@@ -51,7 +51,7 @@ processors:
 
 service:
   pipelines:
-    traces:
-      receivers: [jaeger, otlp]
+    metrics:
+      receivers: [otlp]
       processors: [batch]
-      exporters: [neo4jtraces, logging]
+      exporters: [file]
