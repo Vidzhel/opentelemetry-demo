@@ -1,3 +1,5 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
 name: "Build and Publish"
 
 on:
@@ -112,7 +114,7 @@ jobs:
         with:
           context: ${{ matrix.file_tag.context }}
           file: ${{ matrix.file_tag.file }}
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
             ${{ env.DOCKERHUB_REPO }}:${{ env.RELEASE_VERSION || 'pr' }}-${{matrix.file_tag.tag_suffix }}
