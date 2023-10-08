@@ -4,6 +4,15 @@
 # do not delete this file
 
 exporters:
+  otlp:
+    endpoint: "jaeger:4317"
+    tls:
+      insecure: true
+
+  otlp/signoz:
+    endpoint: ingest.eu.signoz.cloud:443
+    headers:
+      signoz-access-token: "${SIGNOZ_ACCESS_TOKEN}"
   datadog:
     api:
       site: ${DD_SITE}
@@ -61,7 +70,21 @@ processors:
   spanmetrics/dynatrace:
     metrics_exporter: otlphttp/dynatrace
     aggregation_temporality: AGGREGATION_TEMPORALITY_DELTA
+  batch:
 
+connectors:
+  spanmetrics:
+
+receivers:
+  docker_stats:
+  otlp:
+    protocols:
+      grpc:
+      http:
+        cors:
+          allowed_origins:
+            - "http://*"
+            - "https://*"
 
 extensions:
   # AppD cloud requires enabling oath2client extension for sending data to it
@@ -76,8 +99,8 @@ service:
     traces:
       receivers: [otlp]
       processors: [batch, resource, attributes]
-      exporters: [otlp, datadog, otlp/ls, otlp/aspecto, otlp/newrelic, otlp/honeycomb]
+      exporters: [otlp, otlp/ls, otlp/aspecto, otlp/newrelic, otlp/honeycomb, spanmetrics, otlp/signoz]
     metrics:
-      receivers: [otlp]
+      receivers: [otlp, spanmetrics]
       processors: [batch, resource]
-      exporters: [datadog, otlp/ls, otlp/newrelic, otlp/honeycomb]
+      exporters: [otlp/ls, otlp/newrelic, otlp/honeycomb, otlp/signoz]
