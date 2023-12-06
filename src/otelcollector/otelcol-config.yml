@@ -9,31 +9,20 @@ receivers:
             - "https://*"
 
 exporters:
-  otlp:
-    endpoint: "jaeger:4317"
-    tls:
-      insecure: true
+  otlphttp:
+    endpoint: "https://5cd6-46-219-25-130.ngrok-free.app:443"
   logging:
     verbosity: detailed
     sampling_initial: 11
     sampling_thereafter: 2000
-  prometheus:
-    endpoint: "otelcol:9464"
-    resource_to_telemetry_conversion:
-      enabled: true
-    enable_open_metrics: true
 processors:
   batch:
   spanmetrics:
-    metrics_exporter: prometheus
+    metrics_exporter: otlphttp
 
 service:
   pipelines:
     traces:
       receivers: [otlp]
-      processors: [spanmetrics, batch]
-      exporters: [logging, otlp]
-    metrics:
-      receivers: [otlp]
       processors: [batch]
-      exporters: [prometheus, logging]
+      exporters: [otlphttp]

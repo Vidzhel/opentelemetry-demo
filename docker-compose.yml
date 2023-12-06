@@ -625,76 +625,76 @@ services:
     logging: *logging
 
   # OpenTelemetry Collector
-#  otelcol:
-#    image: otel/opentelemetry-collector-contrib:0.69.0
-#    container_name: otel-col
-#    deploy:
-#      resources:
-#        limits:
-#          memory: 100M
-#    restart: unless-stopped
-#    command: [ "--config=/etc/otelcol-config.yml", "--config=/etc/otelcol-config-extras.yml" ]
-#    volumes:
-#      - ./src/otelcollector/otelcol-config.yml:/etc/otelcol-config.yml
-#      - ./src/otelcollector/otelcol-config-extras.yml:/etc/otelcol-config-extras.yml
-#    ports:
-#      - "4317"          # OTLP over gRPC receiver
-#      - "4318:4318"     # OTLP over HTTP receiver
-#      - "9464"          # Prometheus exporter
-#      - "8888"          # metrics endpoint
-#    depends_on:
-#      - jaeger
-#    logging: *logging
-
   otelcol:
-    image: signoz/signoz-otel-collector:latest
-    container_name: otel-col-custom
+    image: otel/opentelemetry-collector-contrib:0.69.0
+    container_name: otel-col
     deploy:
       resources:
         limits:
           memory: 100M
     restart: unless-stopped
-    command: [ "--config=/etc/otelcol-config.yml" ]
+    command: [ "--config=/etc/otelcol-config.yml", "--config=/etc/otelcol-config-extras.yml" ]
     volumes:
-      - ./src/otelcollector/otelcol-custom-config.yml:/etc/otelcol-config.yml
+      - ./src/otelcollector/otelcol-config.yml:/etc/otelcol-config.yml
+      - ./src/otelcollector/otelcol-config-extras.yml:/etc/otelcol-config-extras.yml
     ports:
       - "4317"          # OTLP over gRPC receiver
-      - "4318"     # OTLP over HTTP receiver
+      - "4318:4318"     # OTLP over HTTP receiver
       - "9464"          # Prometheus exporter
       - "8888"          # metrics endpoint
     depends_on:
-      jaeger:
-        condition: service_started
-      neo4j:
-        condition: service_healthy
+      - jaeger
     logging: *logging
 
-  neo4j:
-    image: neo4j:5.4-enterprise
-    container_name: signoz-neo4j
-    ports:
-      - "7474:7474"
-      - "7687:7687"
-    restart: unless-stopped
-    volumes:
-      - ./data/neo4j/conf:/conf
-      - ./data/neo4j/data:/data
-      - ./data/neo4j/import:/import
-      - ./data/neo4j/logs:/logs
-      - ./data/neo4j/plugins:/plugins
-    environment:
-      - NEO4J_PLUGINS=["graph-data-science", "bloom", "apoc"]
-      - NEO4J_dbms_security_procedures_unrestricted=jwt.security.*,bloom.*,gds.*,apoc.*
-      - NEO4J_dbms_security_procedures_allowlist=apoc.coll.*,apoc.load.*,gds.*,bloom.*,apoc.*
-      - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
-      - NEO4J_AUTH=neo4j/password
-      - NEO4J_apoc_export_file_enabled=true
-    healthcheck:
-      test: wget http://localhost:7474 || exit 1
-      interval: 1s
-      timeout: 10s
-      retries: 20
-      start_period: 3s
+#  otelcol:
+#    image: signoz/signoz-otel-collector:latest
+#    container_name: otel-col-custom
+#    deploy:
+#      resources:
+#        limits:
+#          memory: 100M
+#    restart: unless-stopped
+#    command: [ "--config=/etc/otelcol-config.yml" ]
+#    volumes:
+#      - ./src/otelcollector/otelcol-custom-config.yml:/etc/otelcol-config.yml
+#    ports:
+#      - "4317"          # OTLP over gRPC receiver
+#      - "4318"     # OTLP over HTTP receiver
+#      - "9464"          # Prometheus exporter
+#      - "8888"          # metrics endpoint
+#    depends_on:
+#      jaeger:
+#        condition: service_started
+#      neo4j:
+#        condition: service_healthy
+#    logging: *logging
+
+#  neo4j:
+#    image: neo4j:5.4-enterprise
+#    container_name: signoz-neo4j
+#    ports:
+#      - "7474:7474"
+#      - "7687:7687"
+#    restart: unless-stopped
+#    volumes:
+#      - ./data/neo4j/conf:/conf
+#      - ./data/neo4j/data:/data
+#      - ./data/neo4j/import:/import
+#      - ./data/neo4j/logs:/logs
+#      - ./data/neo4j/plugins:/plugins
+#    environment:
+#      - NEO4J_PLUGINS=["graph-data-science", "bloom", "apoc"]
+#      - NEO4J_dbms_security_procedures_unrestricted=jwt.security.*,bloom.*,gds.*,apoc.*
+#      - NEO4J_dbms_security_procedures_allowlist=apoc.coll.*,apoc.load.*,gds.*,bloom.*,apoc.*
+#      - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
+#      - NEO4J_AUTH=neo4j/password
+#      - NEO4J_apoc_export_file_enabled=true
+#    healthcheck:
+#      test: wget http://localhost:7474 || exit 1
+#      interval: 1s
+#      timeout: 10s
+#      retries: 20
+#      start_period: 3s
 
   # Prometheus
   prometheus:
